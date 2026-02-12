@@ -1,7 +1,5 @@
 # 🔗 NexusRPC - Enterprise-Grade RPC Framework
 
-<div align="center">
-
 **A production-ready, feature-rich RPC framework with TLS 1.3, JWT authentication, service discovery, and comprehensive monitoring**
 
 ---
