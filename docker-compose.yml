@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  # etcd Service Discovery
+  etcd:
+    image: bitnami/etcd:latest
+    container_name: nexsrpc-etcd
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+    volumes:
+      - etcd_data:/bitnami/etcd
+    networks:
+      - nexsrpc-network
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nexsrpc-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - nexsrpc-network
+
+  # Grafana Visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: nexsrpc-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - nexsrpc-network
+
+  # Jaeger Distributed Tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: nexsrpc-jaeger
+    ports:
+      - "16686:16686"  # UI
+      - "14250:14250"  # gRPC
+      - "6831:6831/udp"  # UDP
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    networks:
+      - nexsrpc-network
+
+  # NexusRPC Banking Service
+  banking-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.server
+    container_name: nexsrpc-banking
+    ports:
+      - "50051:50051"
+    volumes:
+      - ./security/certs:/app/security/certs:ro
+    environment:
+      - SERVICE_NAME=BankingService
+      - SERVICE_PORT=50051
+      - ETCD_HOST=etcd
+      - ETCD_PORT=2379
+      - TLS_ENABLED=true
+      - LOG_LEVEL=INFO
+    depends_on:
+      - etcd
+      - prometheus
+    networks:
+      - nexsrpc-network
+
+  # NexusRPC Load Testing Client
+  load-tester:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.benchmark
+    container_name: nexsrpc-loadtester
+    depends_on:
+      - banking-service
+    environment:
+      - TARGET_HOST=banking-service
+      - TARGET_PORT=50051
+      - CONCURRENCY=50
+      - REQUESTS=10000
+    networks:
+      - nexsrpc-network
+
+volumes:
+  etcd_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  nexsrpc-network:
+    driver: bridge
