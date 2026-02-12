@@ -118,6 +118,7 @@ python --version
 
 # OpenSSL (for TLS certificates)
 openssl version
+```
 
 ### **Installation**
 
