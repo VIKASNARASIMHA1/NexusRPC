@@ -4,20 +4,6 @@
 
 ---
 
-## 📋 **Table of Contents**
-- [Overview](#-overview)
-- [Features](#-features)
-- [Architecture](#-architecture)
-- [Quick Start](#-quick-start)
-- [Documentation](#-documentation)
-- [Examples](#-examples)
-- [Performance](#-performance)
-- [Deployment](#-deployment)
-- [Contributing](#-contributing)
-- [License](#-license)
-
----
-
 ## 🎯 **Overview**
 
 **NexusRPC** is a **complete, production-ready RPC framework** built from scratch in Python. Unlike gRPC or Thrift which require code generation and external dependencies, NexusRPC is a **pure Python** implementation that gives you **full control** over your distributed systems infrastructure.
