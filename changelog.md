@@ -1,4 +1,4 @@
-# Changelog
+# Change log
 
 All notable changes to this project are documented here.
 
